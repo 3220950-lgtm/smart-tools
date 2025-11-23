@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Smart Tools Pro - Android 15</title>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #D0BCFF;
+            --on-primary: #381E72;
+            --surface: rgba(30, 30, 30, 0.6); /* Glass effect */
+            --surface-active: rgba(50, 50, 50, 0.8);
+            --background: #121212;
+            --text: #E6E1E5;
+            --radius: 24px;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Heebo', sans-serif;
+            background-color: var(--background);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: background 0.5s ease;
+            background-attachment: fixed;
+            background-size: cover;
+        }
+
+        /* Dynamic Background Classes */
+        .bg-1 { background: #121212; }
+        .bg-2 { background: linear-gradient(45deg, #4b6cb7 0%, #182848 100%); }
+        .bg-3 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .bg-4 { background: linear-gradient(to top, #30cfd0 0%, #330867 100%); }
+        .bg-5 { background: conic-gradient(from 180deg at 50% 50%, #2E0049 0deg, #191C47 120deg, #55004D 240deg, #2E0049 360deg); }
+
+        header {
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        h1 { font-weight: 300; font-size: 1.8rem; margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+
+        /* Theme Toggle Button */
+        .theme-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Grid */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            width: 100%;
+            max-width: 500px;
+            padding-bottom: 40px;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: var(--radius);
+            padding: 20px;
+            height: 140px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .card:active { transform: scale(0.96); background: var(--surface-active); }
+
+        .icon-box {
+            width: 50px; height: 50px;
+            background: var(--primary);
+            color: var(--on-primary);
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px;
+        }
+
+        .card h3 { margin: 0; font-weight: 500; font-size: 1.1rem; }
+
+        /* Full Screen Tool View */
+        .tool-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #000;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .tool-overlay.open { transform: translateY(0); }
+
+        .tool-nav {
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            background: rgba(20,20,20,0.9);
+        }
+
+        .back-btn {
+            background: transparent; border: none; color: white;
+            font-size: 24px; padding: 10px; cursor: pointer;
+        }
+
+        .tool-body {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .permission-btn {
+            background: var(--primary);
+            color: var(--on-primary);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        /* --- Tool Specific Styles --- */
+
+        /* Level */
+        .level-circle {
+            width: 280px; height: 280px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
+            position: relative;
+            background: rgba(255,255,255,0.05);
+        }
+        .level-bubble {
+            width: 50px; height: 50px;
+            background: var(--primary);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.1s ease-out;
+            box-shadow: 0 0 20px var(--primary);
+        }
+        .crosshair {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px; height: 20px;
+            border: 2px solid white; border-radius: 50%;
+        }
+
+        /* Compass */
+        .compass-ring {
+            width: 300px; height: 300px;
+            border-radius: 50%;
+            border: 4px solid rgba(255,255,255,0.1);
+            position: relative;
+            transition: transform 0.1s ease-out;
+            background: radial-gradient(circle, #222 60%, #111 100%);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .compass-arrow {
+            width: 0; height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-bottom: 100px solid red;
+            position: absolute; top: 50px;
+            transform: translateX(-50%); left: 50%;
+        }
+        .compass-label {
+            position: absolute; font-weight: bold; font-size: 1.5rem; color: #fff;
+        }
+        .n { top: 10px; left: 50%; transform: translateX(-50%); color: red; }
+        .s { bottom: 10px; left: 50%; transform: translateX(-50%); }
+        .e { right: 15px; top: 50%; transform: translateY(-50%); }
+        .w { left: 15px; top: 50%; transform: translateY(-50%); }
+
+        /* Stopwatch */
+        .timer-display { font-size: 4rem; font-variant-numeric: tabular-nums; font-weight: 200; margin-bottom: 30px; }
+        .timer-controls button {
+            width: 80px; height: 80px; border-radius: 50%; border: none;
+            font-size: 1.2rem; font-weight: bold; margin: 0 10px; cursor: pointer;
+        }
+        .btn-start { background: #4CAF50; color: white; }
+        .btn-stop { background: #F44336; color: white; }
+        .btn-reset { background: #555; color: white; }
+
+        /* Noise Meter */
+        .noise-bar {
+            width: 60px;
+            background: linear-gradient(to top, green, yellow, red);
+            border-radius: 30px;
+            transition: height 0.1s;
+            max-height: 300px;
+            box-shadow: 0 0 20px rgba(0,255,0,0.2);
+        }
+
+        /* Flashlight (Screen) */
+        .flashlight-mode { background-color: white !important; }
+        .flashlight-mode * { display: none !important; }
+        .flashlight-btn-close { 
+            display: block !important; 
+            position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%);
+            background: #333; color: white; padding: 10px 20px; border-radius: 20px; border: none;
+        }
+
+        /* Converter */
+        .converter-box { width: 90%; max-width: 300px; }
+        .converter-box input { 
+            width: 100%; padding: 15px; margin-bottom: 10px; 
+            background: #333; border: none; color: white; font-size: 1.5rem; border-radius: 12px; text-align: center;
+        }
+        .label { text-align: center; display: block; margin-bottom: 5px; color: #aaa; }
+
+    </style>
+</head>
+<body class="bg-1" id="mainBody">
+
+    <header>
+        <h1>ארגז כלים</h1>
+        <button class="theme-btn" onclick="changeBackground()">🎨</button>
+    </header>
+
+    <div class="grid">
+        <div class="card" onclick="openTool('compass')">
+            <div class="icon-box">🧭</div>
+            <h3>מצפן</h3>
+        </div>
+         <div class="card" onclick="openTool('level')">
+            <div class="icon-box">💧</div>
+            <h3>פלס</h3>
+        </div>
+        <div class="card" onclick="openTool('stopwatch')">
+            <div class="icon-box">⏱️</div>
+            <h3>סטופר</h3>
+        </div>
+        <div class="card" onclick="openTool('noise')">
+            <div class="icon-box">🔊</div>
+            <h3>מד רעש</h3>
+        </div>
+        <div class="card" onclick="openTool('magnifier')">
+            <div class="icon-box">🔍</div>
+            <h3>זכוכית מגדלת</h3>
+        </div>
+        <div class="card" onclick="openTool('converter')">
+            <div class="icon-box">📏</div>
+            <h3>ממיר יחידות</h3>
+        </div>
+         <div class="card" onclick="openTool('notes')">
+            <div class="icon-box">📝</div>
+            <h3>פתקים</h3>
+        </div>
+        <div class="card" onclick="openTool('light')">
+            <div class="icon-box">💡</div>
+            <h3>פנס מסך</h3>
+        </div>
+    </div>
+
+    <div id="compass" class="tool-overlay">
+        <div class="tool-nav"><button class="back-btn" onclick="closeTool('compass')">➜</button><h3>מצפן</h3></div>
+        <div class="tool-body">
+            <button class="permission-btn" id="compass-perm" onclick="requestSensors()">לחץ להפעלת חיישנים</button>
+            <div class="compass-ring" id="compassRing">
+                <span class="compass-label n">N</span>
+                <span class="compass-label e">E</span>
+                <span class="compass-label s">S</span>
+                <span class="compass-label w">W</span>
+                <div class="compass-arrow"></div>
+            </div>
+            <h2 id="compassHeading" style="margin-top:30px">0°</h2>
+        </div>
+    </div>
+
+    <div id="level" class="tool-overlay">
+        <div class="tool-nav"><button class="back-btn" onclick="closeTool('level')">➜</button><h3>פלס בועה</h3></div>
+        <div class="tool-body">
+            <button class="permission-btn" id="level-perm" onclick="requestSensors()">לחץ להפעלת חיישנים</button>
+            <div class="level-circle">
+                <div class="crosshair"></div>
+                <div id="levelBubble" class="level-bubble"></div>
+            </div>
+            <p id="levelData" style="margin-top:20px">X: 0° | Y: 0°</p>
+        </div>
+    </div>
+
+    <div id="stopwatch" class="tool-overlay">
+        <div class="tool-nav"><button class="back-btn" onclick="closeTool('stopwatch')">➜</button><h3>סטופר</h3></div>
+        <div class="tool-body">
+            <div class="timer-display" id="sw-display">00:00:00</div>
+            <div class="timer-controls">
+                <button class="btn-start" onclick="startStopwatch()">התחל</button>
+                <button class="btn-stop" onclick="stopStopwatch()">עצור</button>
+                <button class="btn-reset" onclick="resetStopwatch()">איפוס</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="noise" class="tool-overlay">
+        <div class="tool-nav"><button class="back-btn" onclick="closeTool('noise')">➜</button><h3>מד רעש (dB)</h3></div>
+        <div class="tool-body">
+            <button class="permission-btn" id="mic-perm" onclick="startMicrophone()">אשר גישה למיקרופון</button>
+            <div style="height: 300px; width: 60px; background: #333; border-radius: 30px; display: flex; align-items: flex-end; overflow: hidden;">
+                <div id="noiseBar" class="noise-bar" style="height: 10%;"></div>
+            </div>
+            <p>עוצמת קול ויזואלית</p>
+        </div>
+    </div>
+
+    <div id="magnifier" class="tool-overlay">
+        <div class="tool-nav"><button class="back-btn" onclick="closeTool('magnifier')">➜</button><h3>זכוכית מגדלת</h3></div>
+        <div class="tool-body" style="padding:0; background:black;">
+            <video id="camera" autoplay playsinline style="width:100%; height:100%; object-fit:cover;"></video>
+        </div>
+    </div>
+
+    <div id="converter" class="tool-overlay">
+        <div class="tool-nav"><button class="back-btn" onclick="closeTool('converter')">➜</button><h3>ממיר (אינץ' / ס"מ)</h3></div>
+        <div class="tool-body">
+            <div class="converter-box">
+                <span class="label">סנטימטרים (cm)</span>
+                <input type="number" id="cmInput" oninput="convert('cm')">
+                
+                <span class="label" style="margin-top:20px;">אינצ'ים (inch)</span>
+                <input type="number" id="inchInput" oninput="convert('inch')">
+            </div>
+        </div>
+    </div>
+
+    <div id="notes" class="tool-overlay">
+        <div class="tool-nav"><button class="back-btn" onclick="closeTool('notes')">➜</button><h3>פתקים</h3></div>
+        <div class="tool-body" style="align-items: stretch; padding: 20px;">
+            <textarea id="notesArea" style="flex:1; background:transparent; border:none; color:white; font-size:1.2rem; resize:none; outline:none;" placeholder="כתוב כאן..."></textarea>
+        </div>
+    </div>
+
+    <div id="light" class="tool-overlay" style="background:white;">
+        <button class="flashlight-btn-close" onclick="closeTool('light')">כבה פנס</button>
+    </div>
+
+
+    <script>
+        // --- SYSTEM & BACKGROUND ---
+        let currentBg = 1;
+        function changeBackground() {
+            currentBg++;
+            if(currentBg > 5) currentBg = 1;
+            document.getElementById('mainBody').className = 'bg-' + currentBg;
+        }
+
+        function openTool(id) {
+            document.getElementById(id).classList.add('open');
+            if(id === 'magnifier') startCamera();
+            if(id === 'notes') document.getElementById('notesArea').value = localStorage.getItem('notes') || '';
+        }
+
+        function closeTool(id) {
+            document.getElementById(id).classList.remove('open');
+            if(id === 'magnifier') stopCamera();
+            if(id === 'noise') stopMicrophone();
+            if(id === 'stopwatch') stopStopwatch();
+            if(id === 'notes') localStorage.setItem('notes', document.getElementById('notesArea').value);
+        }
+
+        // --- SENSORS (COMPASS & LEVEL) ---
+        // Note: iOS requires explicit permission request on button click
+        function requestSensors() {
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission()
+                    .then(response => {
+                        if (response === 'granted') {
+                            window.addEventListener('deviceorientation', handleOrientation);
+                            hideSensorBtns();
+                        } else {
+                            alert('נדרש אישור חיישנים');
+                        }
+                    })
+                    .catch(console.error);
+            } else {
+                // Non-iOS 13+ devices
+                window.addEventListener('deviceorientation', handleOrientation);
+                hideSensorBtns();
+            }
+        }
+
+        function hideSensorBtns() {
+            document.getElementById('compass-perm').style.display = 'none';
+            document.getElementById('level-perm').style.display = 'none';
+        }
+
+        function handleOrientation(e) {
+            // Compass
+            let compass = e.webkitCompassHeading || Math.abs(e.alpha - 360);
+            document.getElementById('compassRing').style.transform = `rotate(${-compass}deg)`;
+            document.getElementById('compassHeading').innerText = Math.round(compass) + "°";
+
+            // Level
+            let x = e.gamma; // Left/Right
+            let y = e.beta;  // Front/Back
+            
+            // Clamp for visual boundaries
+            let visualX = Math.max(-130, Math.min(130, x * 2.5));
+            let visualY = Math.max(-130, Math.min(130, y * 2.5));
+
+            const bubble = document.getElementById('levelBubble');
+            bubble.style.transform = `translate(calc(-50% + ${visualX}px), calc(-50% + ${visualY}px))`;
+            
+            document.getElementById('levelData').innerText = `X: ${Math.round(x)}° | Y: ${Math.round(y)}°`;
+        }
+
+        // --- STOPWATCH ---
+        let swInterval;
+        let swTime = 0;
+        
+        function startStopwatch() {
+            if(swInterval) return;
+            let startTime = Date.now() - swTime;
+            swInterval = setInterval(() => {
+                swTime = Date.now() - startTime;
+                let date = new Date(swTime);
+                let m = String(date.getUTCMinutes()).padStart(2, '0');
+                let s = String(date.getUTCSeconds()).padStart(2, '0');
+                let ms = String(Math.floor(date.getUTCMilliseconds() / 10)).padStart(2, '0');
+                document.getElementById('sw-display').innerText = `${m}:${s}:${ms}`;
+            }, 50);
+        }
+        
+        function stopStopwatch() {
+            clearInterval(swInterval);
+            swInterval = null;
+        }
+        
+        function resetStopwatch() {
+            stopStopwatch();
+            swTime = 0;
+            document.getElementById('sw-display').innerText = "00:00:00";
+        }
+
+        // --- NOISE METER ---
+        let audioContext, analyser, microphone, javascriptNode;
+        async function startMicrophone() {
+            try {
+                document.getElementById('mic-perm').style.display = 'none';
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioContext = new AudioContext();
+                analyser = audioContext.createAnalyser();
+                microphone = audioContext.createMediaStreamSource(stream);
+                javascriptNode = audioContext.createScriptProcessor(2048, 1, 1);
+
+                analyser.smoothingTimeConstant = 0.8;
+                analyser.fftSize = 1024;
+
+                microphone.connect(analyser);
+                analyser.connect(javascriptNode);
+                javascriptNode.connect(audioContext.destination);
+
+                javascriptNode.onaudioprocess = function() {
+                    var array = new Uint8Array(analyser.frequencyBinCount);
+                    analyser.getByteFrequencyData(array);
+                    var values = 0;
+                    var length = array.length;
+                    for (var i = 0; i < length; i++) { values += array[i]; }
+                    var average = values / length;
+                    
+                    // Visual logic
+                    let height = Math.min(100, average * 2); // Sensitivity amp
+                    document.getElementById('noiseBar').style.height = height + "%";
+                }
+            } catch(e) {
+                alert("גישה למיקרופון נדחתה או לא נתמכת");
+            }
+        }
+        function stopMicrophone() {
+            if(audioContext) audioContext.close();
+        }
+
+        // --- MAGNIFIER ---
+        let videoStream;
+        async function startCamera() {
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                document.getElementById('camera').srcObject = videoStream;
+            } catch (e) { console.error("Camera fail", e); }
+        }
+        function stopCamera() {
+            if(videoStream) videoStream.getTracks().forEach(track => track.stop());
+        }
+
+        // --- CONVERTER ---
+        function convert(type) {
+            let cm = document.getElementById('cmInput');
+            let inch = document.getElementById('inchInput');
+            if(type === 'cm') {
+                inch.value = (cm.value * 0.393701).toFixed(2);
+            } else {
+                cm.value = (inch.value * 2.54).toFixed(2);
+            }
+        }
+
+    </script>
+</body>
+  </html>
